@@ -91,6 +91,17 @@
                   </b-select>
                 </b-field>
 
+                <b-field :label="$tc('globals.terms.productTemplate')" label-position="on-border">
+                  <b-select :placeholder="$tc('globals.terms.productTemplate')"
+                    v-model="form.productTemplateId"
+                    name="product" :disabled="!canEdit" required>
+                    <template v-for="t in templates">
+                      <option v-if="t.type === 'product'"
+                        :value="t.id" :key="t.id">{{ t.name }}</option>
+                    </template>
+                  </b-select>
+                </b-field>
+
                 <b-field :label="$tc('globals.terms.messenger')" label-position="on-border">
                   <b-select :placeholder="$tc('globals.terms.messenger')" v-model="form.messenger"
                     name="messenger" :disabled="!canEdit" required>
@@ -178,6 +189,7 @@
           :id="data.id"
           :title="data.name"
           :templateId="form.templateId"
+          :productTemplateId="form.productTemplateId"
           :contentType="data.contentType"
           :body="data.body"
           :disabled="!canEdit"
@@ -292,6 +304,7 @@ export default Vue.extend({
         headers: [],
         messenger: 'email',
         templateId: 0,
+        productTemplateId: 0,
         lists: [],
         tags: [],
         sendAt: null,
@@ -415,6 +428,7 @@ export default Vue.extend({
         headers: this.form.headers,
         tags: this.form.tags,
         template_id: this.form.templateId,
+        product_template_id: this.form.productTemplateId,
         content_type: this.form.content.contentType,
         body: this.form.content.body,
         altbody: this.form.content.contentType !== 'plain' ? this.form.altbody : null,
@@ -441,6 +455,7 @@ export default Vue.extend({
         send_at: this.form.sendLater ? this.form.sendAtDate : null,
         headers: this.form.headers,
         template_id: this.form.templateId,
+        product_template_id: this.form.productTemplateId,
         // body: this.form.body,
       };
 
@@ -463,6 +478,7 @@ export default Vue.extend({
         send_at: this.form.sendLater ? this.form.sendAtDate : null,
         headers: this.form.headers,
         template_id: this.form.templateId,
+        product_template_id: this.form.productTemplateId,
         content_type: this.form.content.contentType,
         body: this.form.content.body,
         altbody: this.form.content.contentType !== 'plain' ? this.form.altbody : null,
@@ -611,7 +627,8 @@ export default Vue.extend({
     this.$api.getTemplates().then((data) => {
       if (data.length > 0) {
         if (!this.form.templateId) {
-          this.form.templateId = data.find((i) => i.isDefault === true).id;
+          this.form.templateId = data.find((i) => i.isDefault === true && i.type === 'campaign').id;
+          this.form.productTemplateId = data.find((i) => i.isDefault === true && i.type === 'product').id;
         }
       }
     });

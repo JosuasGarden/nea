@@ -12,6 +12,7 @@
           <b-loading :active="isLoading" :is-full-page="false"></b-loading>
           <form v-if="body" method="post" :action="previewURL" target="iframe" ref="form">
             <input type="hidden" name="template_id" :value="templateId" />
+            <input type="hidden" name="product_template_id" :value="productTemplateId" />
             <input type="hidden" name="content_type" :value="contentType" />
             <input type="hidden" name="template_type" :value="templateType" />
             <input type="hidden" name="body" :value="body" />
@@ -51,6 +52,10 @@ export default {
     body: String,
     contentType: String,
     templateId: {
+      type: Number,
+      default: 0,
+    },
+    productTemplateId: {
       type: Number,
       default: 0,
     },

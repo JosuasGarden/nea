@@ -28,6 +28,7 @@
                 <b-select v-model="form.type" :disabled="isEditing" expanded>
                   <option value="campaign">{{ $tc('globals.terms.campaign') }}</option>
                   <option value="tx">{{ $tc('globals.terms.tx') }}</option>
+                  <option value="product">{{ $tc('globals.terms.product') }}</option>
                 </b-select>
               </b-field>
             </div>

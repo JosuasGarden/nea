@@ -35,6 +35,10 @@
           :class="props.row.type" :data-cy="`type-${props.row.type}`">
           {{ $tc('globals.terms.campaign', 1) }}
         </b-tag>
+        <b-tag v-else-if="props.row.type === 'product'"
+          :class="props.row.type" :data-cy="`type-${props.row.type}`">
+          {{ $tc('globals.terms.product', 1) }}
+        </b-tag>
         <b-tag v-else
           :class="props.row.type" :data-cy="`type-${props.row.type}`">
           {{ $tc('globals.terms.tx', 1) }}

@@ -96,6 +96,7 @@
       :title="title"
       :contentType="form.format"
       :templateId="templateId"
+      :productTemplateId="productTemplateId"
       :body="form.body"></campaign-preview>
 
     <!-- image picker -->
@@ -177,6 +178,10 @@ export default {
     body: String,
     contentType: String,
     templateId: {
+      type: Number,
+      default: 0,
+    },
+    productTemplateId: {
       type: Number,
       default: 0,
     },

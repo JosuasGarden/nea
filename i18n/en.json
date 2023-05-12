@@ -212,6 +212,8 @@
     "globals.terms.minute": "Minute | Minutes",
     "globals.terms.month": "Month | Months",
     "globals.terms.none": "None",
+    "globals.terms.product": "Product | Products",
+    "globals.terms.productTemplate": "Product Template | Product Templates",
     "globals.terms.second": "Second | Seconds",
     "globals.terms.settings": "Settings",
     "globals.terms.subscriber": "Subscriber | Subscribers",
