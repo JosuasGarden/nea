@@ -1,0 +1,12 @@
+{
+    "verbose": true,
+    "watch": [
+        "cmd/*.go",
+        "internal/**/*.go",
+        "models/*.go",
+        "i18n/*.json",
+        "queries.sql",
+        "go.mod",
+        "dev/config.toml"
+    ]
+}
