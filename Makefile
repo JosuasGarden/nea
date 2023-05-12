@@ -117,3 +117,9 @@ rm-dev-docker: build ## Delete the docker containers including DB volumes.
 init-dev-docker: build-dev-docker ## Delete the docker containers including DB volumes.
 	cd dev; \
 	docker-compose run --rm backend sh -c "make install-frontend-dep && make run BACKEND_ARGS=\"--install --idempotent --yes --config dev/config.toml\""
+
+# Upgrade db
+.PHONY: upgrade-db-docker
+upgrade-db-docker: 
+	cd dev; \
+	docker-compose run --rm backend sh -c "make run BACKEND_ARGS=\"--upgrade --force-db-upgrade --yes --config dev/config.toml\""

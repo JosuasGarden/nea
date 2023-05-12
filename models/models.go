@@ -86,6 +86,7 @@ const (
 	// Templates.
 	TemplateTypeCampaign = "campaign"
 	TemplateTypeTx       = "tx"
+	TemplateTypeProduct  = "product"
 )
 
 // Headers represents an array of string maps used to represent SMTP, HTTP headers etc.
@@ -249,6 +250,7 @@ type Campaign struct {
 	Tags              pq.StringArray  `db:"tags" json:"tags"`
 	Headers           Headers         `db:"headers" json:"headers"`
 	TemplateID        int             `db:"template_id" json:"template_id"`
+	ProductTemplateID int             `db:"product_template_id" json:"product_template_id"`
 	Messenger         string          `db:"messenger" json:"messenger"`
 	Archive           bool            `db:"archive" json:"archive"`
 	ArchiveTemplateID int             `db:"archive_template_id" json:"archive_template_id"`
@@ -256,6 +258,7 @@ type Campaign struct {
 
 	// TemplateBody is joined in from templates by the next-campaigns query.
 	TemplateBody        string             `db:"template_body" json:"-"`
+	ProductTemplateBody string             `db:"product_template_body" json:"-"`
 	ArchiveTemplateBody string             `db:"archive_template_body" json:"-"`
 	Tpl                 *template.Template `json:"-"`
 	SubjectTpl          *txttpl.Template   `json:"-"`

@@ -111,16 +111,17 @@ func handleGetCampaign(c echo.Context) error {
 // handlePreviewCampaign renders the HTML preview of a campaign body.
 func handlePreviewCampaign(c echo.Context) error {
 	var (
-		app      = c.Get("app").(*App)
-		id, _    = strconv.Atoi(c.Param("id"))
-		tplID, _ = strconv.Atoi(c.FormValue("template_id"))
+		app          = c.Get("app").(*App)
+		id, _        = strconv.Atoi(c.Param("id"))
+		tplID, _     = strconv.Atoi(c.FormValue("template_id"))
+		prodTplID, _ = strconv.Atoi(c.FormValue("template_id"))
 	)
 
 	if id < 1 {
 		return echo.NewHTTPError(http.StatusBadRequest, app.i18n.T("globals.messages.invalidID"))
 	}
 
-	camp, err := app.core.GetCampaignForPreview(id, tplID)
+	camp, err := app.core.GetCampaignForPreview(id, tplID, prodTplID)
 	if err != nil {
 		return err
 	}
@@ -386,10 +387,11 @@ func handleGetRunningCampaignStats(c echo.Context) error {
 // arbitrary subscribers for testing.
 func handleTestCampaign(c echo.Context) error {
 	var (
-		app       = c.Get("app").(*App)
-		campID, _ = strconv.Atoi(c.Param("id"))
-		tplID, _  = strconv.Atoi(c.FormValue("template_id"))
-		req       campaignReq
+		app          = c.Get("app").(*App)
+		campID, _    = strconv.Atoi(c.Param("id"))
+		tplID, _     = strconv.Atoi(c.FormValue("template_id"))
+		prodTplID, _ = strconv.Atoi(c.FormValue("product_template_id"))
+		req          campaignReq
 	)
 
 	if campID < 1 {
@@ -422,7 +424,7 @@ func handleTestCampaign(c echo.Context) error {
 	}
 
 	// The campaign.
-	camp, err := app.core.GetCampaignForPreview(campID, tplID)
+	camp, err := app.core.GetCampaignForPreview(campID, tplID, prodTplID)
 	if err != nil {
 		return err
 	}

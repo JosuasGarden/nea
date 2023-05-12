@@ -124,6 +124,7 @@ func initFlags() {
 	f.String("i18n-dir", "", "(optional) path to directory with i18n language files")
 	f.Bool("yes", false, "assume 'yes' to prompts during --install/upgrade")
 	f.Bool("passive", false, "run in passive mode where campaigns are not processed")
+    f.Bool("force-db-upgrade", false, "forces the latest database upgrade, even if there a no pending")
 	if err := f.Parse(os.Args[1:]); err != nil {
 		lo.Fatalf("error loading flags: %v", err)
 	}

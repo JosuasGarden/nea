@@ -122,7 +122,21 @@ func install(lastVer string, db *sqlx.DB, fs stuffbin.FileSystem, prompt, idempo
 		lo.Fatalf("error creating default campaign template: %v", err)
 	}
 	if _, err := q.SetDefaultTemplate.Exec(campTplID); err != nil {
-		lo.Fatalf("error setting default template: %v", err)
+		lo.Fatalf("error setting default campaign template: %v", err)
+	}
+
+	// Default product template.
+	prodTpl, err := fs.Get("/static/email-templates/default-product.tpl")
+	if err != nil {
+		lo.Fatalf("error reading default product template: %v", err)
+	}
+
+	var prodTplID int
+	if err := q.CreateTemplate.Get(&prodTplID, "Default product template", models.TemplateTypeProduct, "", prodTpl.ReadBytes()); err != nil {
+		lo.Fatalf("error creating default product template: %v", err)
+	}
+	if _, err := q.SetDefaultTemplate.Exec(prodTplID); err != nil {
+		lo.Fatalf("error setting default product template: %v", err)
 	}
 
 	// Default campaign archive template.
@@ -133,7 +147,7 @@ func install(lastVer string, db *sqlx.DB, fs stuffbin.FileSystem, prompt, idempo
 
 	var archiveTplID int
 	if err := q.CreateTemplate.Get(&archiveTplID, "Default archive template", models.TemplateTypeCampaign, "", archiveTpl.ReadBytes()); err != nil {
-		lo.Fatalf("error creating default campaign template: %v", err)
+		lo.Fatalf("error creating default archive template: %v", err)
 	}
 
 	// Sample campaign.
@@ -157,6 +171,7 @@ func install(lastVer string, db *sqlx.DB, fs stuffbin.FileSystem, prompt, idempo
 		pq.StringArray{"test-campaign"},
 		emailMsgr,
 		campTplID,
+        prodTplID,
 		pq.Int64Array{1},
 		false,
 		archiveTplID,

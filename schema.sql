@@ -6,7 +6,7 @@ DROP TYPE IF EXISTS campaign_status CASCADE; CREATE TYPE campaign_status AS ENUM
 DROP TYPE IF EXISTS campaign_type CASCADE; CREATE TYPE campaign_type AS ENUM ('regular', 'optin');
 DROP TYPE IF EXISTS content_type CASCADE; CREATE TYPE content_type AS ENUM ('richtext', 'html', 'plain', 'markdown');
 DROP TYPE IF EXISTS bounce_type CASCADE; CREATE TYPE bounce_type AS ENUM ('soft', 'hard', 'complaint');
-DROP TYPE IF EXISTS template_type CASCADE; CREATE TYPE template_type AS ENUM ('campaign', 'tx');
+DROP TYPE IF EXISTS template_type CASCADE; CREATE TYPE template_type AS ENUM ('campaign', 'tx', 'product');
 
 -- subscribers
 DROP TABLE IF EXISTS subscribers CASCADE;
@@ -67,8 +67,6 @@ CREATE TABLE templates (
     created_at      TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at      TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
-CREATE UNIQUE INDEX ON templates (is_default) WHERE is_default = true;
-
 
 -- campaigns
 DROP TABLE IF EXISTS campaigns CASCADE;
@@ -92,7 +90,9 @@ CREATE TABLE campaigns (
 
     -- The ID of the messenger backend used to send this campaign. 
     messenger        TEXT NOT NULL,
-    template_id      INTEGER REFERENCES templates(id) ON DELETE SET DEFAULT DEFAULT 1,
+
+    template_id             INTEGER REFERENCES templates(id) ON DELETE SET DEFAULT DEFAULT 1,
+    product_template_id     INTEGER REFERENCES templates(id) ON DELETE SET DEFAULT DEFAULT 2,
 
     -- Progress and stats.
     to_send            INT NOT NULL DEFAULT 0,

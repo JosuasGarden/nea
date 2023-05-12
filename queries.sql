@@ -451,16 +451,22 @@ WITH campLists AS (
     -- Get the list_ids and their optin statuses for the campaigns found in the previous step.
     SELECT lists.id AS list_id, campaign_id, optin FROM lists
     INNER JOIN campaign_lists ON (campaign_lists.list_id = lists.id)
-    WHERE lists.id = ANY($14::INT[])
+    WHERE lists.id = ANY($15::INT[])
 ),
-tpl AS (
+campTpl AS (
     -- If there's no template_id given, use the defualt template.
-    SELECT (CASE WHEN $13 = 0 THEN id ELSE $13 END) AS id FROM templates WHERE is_default IS TRUE
+    SELECT (CASE WHEN $13 = 0 THEN id ELSE $13 END) AS id FROM templates 
+    WHERE is_default IS TRUE AND type = 'campaign'
+),
+prodTpl AS (
+    -- If there's no product_template_id given, use the defualt product template.
+    SELECT (CASE WHEN $14 = 0 THEN id ELSE $14 END) AS id FROM templates 
+    WHERE is_default IS TRUE AND type = 'product'
 ),
 counts AS (
     SELECT COALESCE(COUNT(id), 0) as to_send, COALESCE(MAX(id), 0) as max_sub_id
     FROM subscribers
-    LEFT JOIN campLists ON (campLists.campaign_id = ANY($14::INT[]))
+    LEFT JOIN campLists ON (campLists.campaign_id = ANY($15::INT[]))
     LEFT JOIN subscriber_lists ON (
         subscriber_lists.status != 'unsubscribed' AND
         subscribers.id = subscriber_lists.subscriber_id AND
@@ -470,16 +476,16 @@ counts AS (
         -- any status except for 'unsubscribed' (already excluded above) works.
         (CASE WHEN campLists.optin = 'double' THEN subscriber_lists.status = 'confirmed' ELSE true END)
     )
-    WHERE subscriber_lists.list_id=ANY($14::INT[])
+    WHERE subscriber_lists.list_id=ANY($15::INT[])
     AND subscribers.status='enabled'
 ),
 camp AS (
-    INSERT INTO campaigns (uuid, type, name, subject, from_email, body, altbody, content_type, send_at, headers, tags, messenger, template_id, to_send, max_subscriber_id, archive, archive_template_id, archive_meta)
-        SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, (SELECT id FROM tpl), (SELECT to_send FROM counts), (SELECT max_sub_id FROM counts), $15, (CASE WHEN $16 = 0 THEN (SELECT id FROM tpl) ELSE $16 END), $17
+    INSERT INTO campaigns (uuid, type, name, subject, from_email, body, altbody, content_type, send_at, headers, tags, messenger, template_id, product_template_id, to_send, max_subscriber_id, archive, archive_template_id, archive_meta)
+        SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, (SELECT id FROM campTpl), (SELECT id FROM prodTpl), (SELECT to_send FROM counts), (SELECT max_sub_id FROM counts), $16, (CASE WHEN $17 = 0 THEN (SELECT id FROM campTpl) ELSE $17 END), $18
         RETURNING id
 )
 INSERT INTO campaign_lists (campaign_id, list_id, list_name)
-    (SELECT (SELECT id FROM camp), id, name FROM lists WHERE id=ANY($14::INT[]))
+    (SELECT (SELECT id FROM camp), id, name FROM lists WHERE id=ANY($15::INT[]))
     RETURNING (SELECT id FROM camp);
 
 -- name: query-campaigns
@@ -492,7 +498,8 @@ INSERT INTO campaign_lists (campaign_id, list_id, list_name)
 SELECT  c.id, c.uuid, c.name, c.subject, c.from_email,
         c.messenger, c.started_at, c.to_send, c.sent, c.type,
         c.body, c.altbody, c.send_at, c.headers, c.status, c.content_type, c.tags,
-        c.template_id, c.archive, c.archive_template_id, c.archive_meta, c.created_at, c.updated_at,
+        c.template_id, c.product_template_id, c.archive, c.archive_template_id, 
+        c.archive_meta, c.created_at, c.updated_at,
         COUNT(*) OVER () AS total,
         (
             SELECT COALESCE(ARRAY_TO_JSON(ARRAY_AGG(l)), '[]') FROM (
@@ -509,22 +516,38 @@ ORDER BY %order% OFFSET $4 LIMIT (CASE WHEN $5 < 1 THEN NULL ELSE $5 END);
 
 -- name: get-campaign
 SELECT campaigns.*,
-    COALESCE(templates.body, (SELECT body FROM templates WHERE is_default = true LIMIT 1)) AS template_body
+    COALESCE(
+        campTpls.body, 
+        (SELECT body FROM templates WHERE is_default = true AND type = 'campaign' LIMIT 1)
+    ) AS template_body,
+    COALESCE(
+        prodTpls.body, 
+        (SELECT body FROM templates WHERE is_default = true AND type = 'product' LIMIT 1)
+    ) AS product_template_body
     FROM campaigns
-    LEFT JOIN templates ON (
-        CASE WHEN $3 = 'default' THEN templates.id = campaigns.template_id
-        ELSE templates.id = campaigns.archive_template_id END
+    LEFT JOIN templates AS campTpls ON (
+        CASE WHEN $3 = 'default' THEN campTpls.id = campaigns.template_id
+        ELSE campTpls.id = campaigns.archive_template_id END
     )
+    LEFT JOIN templates AS prodTpls ON prodTpls.id = campaigns.product_template_id
     WHERE CASE WHEN $1 > 0 THEN campaigns.id = $1 ELSE uuid = $2 END;
 
 -- name: get-archived-campaigns
 SELECT COUNT(*) OVER () AS total, campaigns.*,
-    COALESCE(templates.body, (SELECT body FROM templates WHERE is_default = true LIMIT 1)) AS template_body
+    COALESCE(
+        campTpls.body, 
+        (SELECT body FROM templates WHERE is_default = true AND type = 'campaign' LIMIT 1)
+    ) AS template_body,
+    COALESCE(
+        prodTpls.body, 
+        (SELECT body FROM templates WHERE is_default = true AND type = 'product' LIMIT 1)
+    ) AS product_template_body
     FROM campaigns
-    LEFT JOIN templates ON (
-        CASE WHEN $3 = 'default' THEN templates.id = campaigns.template_id
-        ELSE templates.id = campaigns.archive_template_id END
+    LEFT JOIN templates AS campTpls ON (
+        CASE WHEN $3 = 'default' THEN campTpls.id = campaigns.template_id
+        ELSE campTpls.id = campaigns.archive_template_id END
     )
+    LEFT JOIN templates AS prodTpls ON prodTpls.id = campaigns.product_template_id
     WHERE campaigns.archive=true AND campaigns.type='regular' AND campaigns.status=ANY('{running, paused, finished}')
     ORDER by campaigns.created_at DESC OFFSET $1 LIMIT $2;
 
@@ -564,17 +587,26 @@ LEFT JOIN bounces AS b ON (b.campaign_id = id)
 ORDER BY ARRAY_POSITION($1, id);
 
 -- name: get-campaign-for-preview
-SELECT campaigns.*, COALESCE(templates.body, (SELECT body FROM templates WHERE is_default = true LIMIT 1)) AS template_body,
-(
-	SELECT COALESCE(ARRAY_TO_JSON(ARRAY_AGG(l)), '[]') FROM (
-		SELECT COALESCE(campaign_lists.list_id, 0) AS id,
-        campaign_lists.list_name AS name
-        FROM campaign_lists WHERE campaign_lists.campaign_id = campaigns.id
-	) l
-) AS lists
-FROM campaigns
-LEFT JOIN templates ON (templates.id = (CASE WHEN $2=0 THEN campaigns.template_id ELSE $2 END))
-WHERE campaigns.id = $1;
+SELECT campaigns.*, 
+    COALESCE(
+        campTpls.body, 
+        (SELECT body FROM templates WHERE is_default = true AND type = 'campaign' LIMIT 1))
+    AS template_body,
+    COALESCE(
+        prodTpls.body, 
+        (SELECT body FROM templates WHERE is_default = true AND type = 'product' LIMIT 1))
+    AS product_template_body,
+    (
+        SELECT COALESCE(ARRAY_TO_JSON(ARRAY_AGG(l)), '[]') FROM (
+            SELECT COALESCE(campaign_lists.list_id, 0) AS id,
+            campaign_lists.list_name AS name
+            FROM campaign_lists WHERE campaign_lists.campaign_id = campaigns.id
+        ) l
+    ) AS lists
+    FROM campaigns
+    LEFT JOIN templates AS campTpls ON (campTpls.id = (CASE WHEN $2=0 THEN campaigns.template_id ELSE $2 END))
+    LEFT JOIN templates AS prodTpls ON (prodTpls.id = (CASE WHEN $3=0 THEN campaigns.product_template_id ELSE $3 END))
+    WHERE campaigns.id = $1;
 
 -- name: get-campaign-status
 SELECT id, status, to_send, sent, started_at, updated_at
@@ -590,11 +622,20 @@ SELECT id, status, to_send, sent, started_at, updated_at
 -- a campaign. This is used to fetch and slice subscribers for the campaign in next-subscriber-campaigns.
 WITH camps AS (
     -- Get all running campaigns and their template bodies (if the template's deleted, the default template body instead)
-    SELECT campaigns.*, COALESCE(templates.body, (SELECT body FROM templates WHERE is_default = true LIMIT 1)) AS template_body
-    FROM campaigns
-    LEFT JOIN templates ON (templates.id = campaigns.template_id)
-    WHERE (status='running' OR (status='scheduled' AND NOW() >= campaigns.send_at))
-    AND NOT(campaigns.id = ANY($1::INT[]))
+    SELECT campaigns.*, 
+        COALESCE(
+            campTpls.body, 
+            (SELECT body FROM templates WHERE is_default = true AND type = 'campaign' LIMIT 1))
+        AS template_body,
+        COALESCE(
+            prodTpls.body, 
+            (SELECT body FROM templates WHERE is_default = true AND type = 'product' LIMIT 1))
+        AS product_template_body
+        FROM campaigns
+        LEFT JOIN templates AS campTpls ON (campTpls.id = campaigns.template_id)
+        LEFT JOIN templates AS prodTpls ON (prodTpls.id = campaigns.product_template_id)
+        WHERE (status='running' OR (status='scheduled' AND NOW() >= campaigns.send_at))
+        AND NOT(campaigns.id = ANY($1::INT[]))
 ),
 campLists AS (
     -- Get the list_ids and their optin statuses for the campaigns found in the previous step.
@@ -763,18 +804,19 @@ WITH camp AS (
         tags=$11::VARCHAR(100)[],
         messenger=$12,
         template_id=$13,
-        archive=$15,
-        archive_template_id=$16,
-        archive_meta=$17,
+        product_template_id=$14,
+        archive=$16,
+        archive_template_id=$17,
+        archive_meta=$18,
         updated_at=NOW()
     WHERE id = $1 RETURNING id
 ),
 d AS (
     -- Reset list relationships
-    DELETE FROM campaign_lists WHERE campaign_id = $1 AND NOT(list_id = ANY($14))
+    DELETE FROM campaign_lists WHERE campaign_id = $1 AND NOT(list_id = ANY($15))
 )
 INSERT INTO campaign_lists (campaign_id, list_id, list_name)
-    (SELECT $1 as campaign_id, id, name FROM lists WHERE id=ANY($14::INT[]))
+    (SELECT $1 as campaign_id, id, name FROM lists WHERE id=ANY($15::INT[]))
     ON CONFLICT (campaign_id, list_id) DO UPDATE SET list_name = EXCLUDED.list_name;
 
 -- name: update-campaign-counts
@@ -850,10 +892,13 @@ UPDATE templates SET
 WHERE id = $1;
 
 -- name: set-default-template
-WITH u AS (
-    UPDATE templates SET is_default=true WHERE id=$1 AND type='campaign' RETURNING id
+WITH tpl AS (
+    SELECT type FROM templates WHERE id=$1
+),
+u AS (
+    UPDATE templates SET is_default=true WHERE id=$1 AND type=(SELECT type FROM tpl) RETURNING id
 )
-UPDATE templates SET is_default=false WHERE id != $1;
+UPDATE templates SET is_default=false WHERE id != $1 AND type=(SELECT type FROM tpl);
 
 -- name: delete-template
 -- Delete a template as long as there's more than one. On deletion, set all campaigns

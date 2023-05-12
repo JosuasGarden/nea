@@ -36,11 +36,12 @@ var migList = []migFunc{
 	{"v2.3.0", migrations.V2_3_0},
 	{"v2.4.0", migrations.V2_4_0},
 	{"v2.5.0", migrations.V2_5_0},
+	{"v2.6.0", migrations.V2_6_0},
 }
 
 // upgrade upgrades the database to the current version by running SQL migration files
 // for all version from the last known version to the current one.
-func upgrade(db *sqlx.DB, fs stuffbin.FileSystem, prompt bool) {
+func upgrade(db *sqlx.DB, fs stuffbin.FileSystem, prompt bool, force bool) {
 	if prompt {
 		var ok string
 		fmt.Printf("** IMPORTANT: Take a backup of the database before upgrading.\n")
@@ -58,11 +59,13 @@ func upgrade(db *sqlx.DB, fs stuffbin.FileSystem, prompt bool) {
 	if err != nil {
 		lo.Fatalf("error checking migrations: %v", err)
 	}
-
 	// No migrations to run.
-	if len(toRun) == 0 {
+	if len(toRun) == 0 && !force {
 		lo.Printf("no upgrades to run. Database is up to date.")
 		return
+	} else if force {
+		lo.Println("forcing latest database upgrade")
+        toRun = append(toRun, migList[len(migList)-1])
 	}
 
 	// Execute migrations in succession.

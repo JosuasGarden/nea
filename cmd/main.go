@@ -139,7 +139,7 @@ func init() {
 	}
 
 	if ko.Bool("upgrade") {
-		upgrade(db, fs, !ko.Bool("yes"))
+		upgrade(db, fs, !ko.Bool("yes"), ko.Bool("force-db-upgrade"))
 		os.Exit(0)
 	}
 

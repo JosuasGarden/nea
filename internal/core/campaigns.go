@@ -121,9 +121,9 @@ func (c *Core) getCampaign(id int, uuid string, tplType string) (models.Campaign
 }
 
 // GetCampaignForPreview retrieves a campaign with a template body.
-func (c *Core) GetCampaignForPreview(id, tplID int) (models.Campaign, error) {
+func (c *Core) GetCampaignForPreview(id, tplID int, prodTplID int) (models.Campaign, error) {
 	var out models.Campaign
-	if err := c.q.GetCampaignForPreview.Get(&out, id, tplID); err != nil {
+	if err := c.q.GetCampaignForPreview.Get(&out, id, tplID, prodTplID); err != nil {
 		if err == sql.ErrNoRows {
 			return models.Campaign{}, echo.NewHTTPError(http.StatusBadRequest,
 				c.i18n.Ts("globals.messages.notFound", "name", "{globals.terms.campaign}"))
@@ -179,6 +179,7 @@ func (c *Core) CreateCampaign(o models.Campaign, listIDs []int) (models.Campaign
 		pq.StringArray(normalizeTags(o.Tags)),
 		o.Messenger,
 		o.TemplateID,
+		o.ProductTemplateID,
 		pq.Array(listIDs),
 		o.Archive,
 		o.ArchiveTemplateID,
@@ -216,6 +217,7 @@ func (c *Core) UpdateCampaign(id int, o models.Campaign, listIDs []int, sendLate
 		pq.StringArray(normalizeTags(o.Tags)),
 		o.Messenger,
 		o.TemplateID,
+        o.ProductTemplateID,
 		pq.Array(listIDs),
 		o.Archive,
 		o.ArchiveTemplateID,
