@@ -57,6 +57,9 @@
             <b-tab-item :label="$t('settings.appearance.name')">
               <appearance-settings :form="form" :key="key" />
             </b-tab-item><!-- appearance -->
+            <b-tab-item :label="$t('settings.productProvider.name')">
+              <product-provider-settings :form="form" :key="key" />
+            </b-tab-item><!-- appearance -->
           </b-tabs>
 
       </section>
@@ -76,6 +79,7 @@ import SmtpSettings from './settings/smtp.vue';
 import BounceSettings from './settings/bounces.vue';
 import MessengerSettings from './settings/messengers.vue';
 import AppearanceSettings from './settings/appearance.vue';
+import ProductProviderSettings from './settings/product-provider.vue';
 
 const dummyPassword = ' '.repeat(8);
 
@@ -90,6 +94,7 @@ export default Vue.extend({
     BounceSettings,
     MessengerSettings,
     AppearanceSettings,
+    ProductProviderSettings,
   },
 
   data() {
@@ -156,6 +161,13 @@ export default Vue.extend({
       // Domain blocklist array from multi-line strings.
       form['privacy.domain_blocklist'] = form['privacy.domain_blocklist'].split('\n').map((v) => v.trim().toLowerCase()).filter((v) => v !== '');
 
+      // Product provider
+      for (let i = 0; i < form.product_provider.length; i += 1) {
+        const provider = form.product_provider[i];
+        // copy the select provider type config
+        form.product_provider[i].config = provider.config[provider.type];
+      }
+
       this.isLoading = true;
       this.$api.updateSettings(form).then((data) => {
         if (data.needsRestart) {
@@ -217,6 +229,23 @@ export default Vue.extend({
 
         // Domain blocklist array to multi-line string.
         d['privacy.domain_blocklist'] = d['privacy.domain_blocklist'].join('\n');
+
+        // Product provider
+        for (let i = 0; i < d.product_provider.length; i += 1) {
+          const providerType = d.product_provider[i].type;
+          const providerConfig = d.product_provider[i].config;
+
+          d.product_provider[i].config = Object.fromEntries(
+            this.serverConfig.product_provider.map(
+              (provider) => [
+                provider.type,
+                JSON.parse(JSON.stringify(provider.config)),
+              ],
+            ),
+          );
+
+          d.product_provider[i].config[providerType] = providerConfig;
+        }
 
         this.key += 1;
         this.form = d;

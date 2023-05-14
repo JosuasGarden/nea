@@ -118,7 +118,9 @@ func handlePreviewTemplate(c echo.Context) error {
 				app.i18n.Ts("templates.errorRendering", "error", err.Error()))
 		}
 		out = msg.Body()
-	} else {
+    } else if tpl.Type == models.TemplateTypeProduct {
+        out = []byte("asdasdasd")
+    } else {
 		// Compile transactional template.
 		if err := tpl.Compile(app.manager.GenericTemplateFuncs()); err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
