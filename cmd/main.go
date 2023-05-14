@@ -22,6 +22,7 @@ import (
 	"github.com/knadh/listmonk/internal/i18n"
 	"github.com/knadh/listmonk/internal/manager"
 	"github.com/knadh/listmonk/internal/media"
+	productmanager "github.com/knadh/listmonk/internal/product-manager"
 	"github.com/knadh/listmonk/internal/subimporter"
 	"github.com/knadh/listmonk/models"
 	"github.com/knadh/paginator"
@@ -39,7 +40,7 @@ type App struct {
 	fs         stuffbin.FileSystem
 	db         *sqlx.DB
 	queries    *models.Queries
-	constants  *constants
+	constants  *Constants
 	manager    *manager.Manager
 	importer   *subimporter.Importer
 	messengers map[string]manager.Messenger
@@ -202,7 +203,8 @@ func main() {
 	})
 
 	app.queries = queries
-	app.manager = initCampaignManager(app.queries, app.constants, app)
+    productManager := productmanager.InitProductManager(ko, lo)
+	app.manager = initCampaignManager(app.queries, app.constants, app, productManager)
 	app.importer = initImporter(app.queries, db, app)
 	app.notifTpls = initNotifTemplates("/email-templates/*.html", fs, app.i18n, app.constants)
 	initTxTemplates(app.manager, app)

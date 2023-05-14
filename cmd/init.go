@@ -33,6 +33,7 @@ import (
 	"github.com/knadh/listmonk/internal/media/providers/s3"
 	"github.com/knadh/listmonk/internal/messenger/email"
 	"github.com/knadh/listmonk/internal/messenger/postback"
+	productmanager "github.com/knadh/listmonk/internal/product-manager"
 	"github.com/knadh/listmonk/internal/subimporter"
 	"github.com/knadh/listmonk/models"
 	"github.com/knadh/stuffbin"
@@ -48,8 +49,8 @@ const (
 	adminRoot = "/admin"
 )
 
-// constants contains static, constant config values required by the app.
-type constants struct {
+// Constants contains static, constant config values required by the app.
+type Constants struct {
 	SiteName                      string   `koanf:"site_name"`
 	RootURL                       string   `koanf:"root_url"`
 	LogoURL                       string   `koanf:"logo_url"`
@@ -124,7 +125,7 @@ func initFlags() {
 	f.String("i18n-dir", "", "(optional) path to directory with i18n language files")
 	f.Bool("yes", false, "assume 'yes' to prompts during --install/upgrade")
 	f.Bool("passive", false, "run in passive mode where campaigns are not processed")
-    f.Bool("force-db-upgrade", false, "forces the latest database upgrade, even if there a no pending")
+	f.Bool("force-db-upgrade", false, "forces the latest database upgrade, even if there a no pending")
 	if err := f.Parse(os.Args[1:]); err != nil {
 		lo.Fatalf("error loading flags: %v", err)
 	}
@@ -350,9 +351,9 @@ func initSettings(query string, db *sqlx.DB, ko *koanf.Koanf) {
 	}
 }
 
-func initConstants() *constants {
+func initConstants() *Constants {
 	// Read constants.
-	var c constants
+	var c Constants
 	if err := ko.Unmarshal("app", &c); err != nil {
 		lo.Fatalf("error loading app config: %v", err)
 	}
@@ -414,7 +415,7 @@ func initI18n(lang string, fs stuffbin.FileSystem) *i18n.I18n {
 }
 
 // initCampaignManager initializes the campaign manager.
-func initCampaignManager(q *models.Queries, cs *constants, app *App) *manager.Manager {
+func initCampaignManager(q *models.Queries, cs *Constants, app *App, productManager *productmanager.ProductManager) *manager.Manager {
 	campNotifCB := func(subject string, data interface{}) error {
 		return app.sendNotification(cs.NotifyEmails, subject, notifTplCampaign, data)
 	}
@@ -449,7 +450,7 @@ func initCampaignManager(q *models.Queries, cs *constants, app *App) *manager.Ma
 		SlidingWindowRate:     ko.Int("app.message_sliding_window_rate"),
 		ScanInterval:          time.Second * 5,
 		ScanCampaigns:         !ko.Bool("passive"),
-	}, newManagerStore(q), campNotifCB, app.i18n, lo)
+	}, newManagerStore(q), campNotifCB, app.i18n, lo, productManager)
 }
 
 func initTxTemplates(m *manager.Manager, app *App) {
@@ -595,7 +596,7 @@ func initMediaStore() media.Store {
 
 // initNotifTemplates compiles and returns e-mail notification templates that are
 // used for sending ad-hoc notifications to admins and subscribers.
-func initNotifTemplates(path string, fs stuffbin.FileSystem, i *i18n.I18n, cs *constants) *notifTpls {
+func initNotifTemplates(path string, fs stuffbin.FileSystem, i *i18n.I18n, cs *Constants) *notifTpls {
 	// Register utility functions that the e-mail templates can use.
 	funcs := template.FuncMap{
 		"RootURL": func() string {

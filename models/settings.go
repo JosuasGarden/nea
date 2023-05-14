@@ -109,4 +109,10 @@ type Settings struct {
 	AdminCustomJS   string `json:"appearance.admin.custom_js"`
 	PublicCustomCSS string `json:"appearance.public.custom_css"`
 	PublicCustomJS  string `json:"appearance.public.custom_js"`
+
+	ProductProdiver []struct {
+		Enabled bool        `json:"enabled"`
+		Type    string      `json:"type"`
+		Config  interface{} `json:"config"`
+	} `json:"product_provider"`
 }

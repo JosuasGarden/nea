@@ -403,6 +403,10 @@ type TxMessage struct {
 	SubjectTpl *txttpl.Template   `json:"-"`
 }
 
+type Product struct {
+
+}
+
 // markdown is a global instance of Markdown parser and renderer.
 var markdown = goldmark.New(
 	goldmark.WithParserOptions(

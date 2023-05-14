@@ -119,7 +119,7 @@ func handlePreviewTemplate(c echo.Context) error {
 		}
 		out = msg.Body()
     } else if tpl.Type == models.TemplateTypeProduct {
-        out = []byte("asdasdasd")
+
     } else {
 		// Compile transactional template.
 		if err := tpl.Compile(app.manager.GenericTemplateFuncs()); err != nil {

@@ -13,6 +13,7 @@ import (
 
 	"github.com/Masterminds/sprig/v3"
 	"github.com/knadh/listmonk/internal/i18n"
+	productmanager "github.com/knadh/listmonk/internal/product-manager"
 	"github.com/knadh/listmonk/models"
 	"github.com/paulbellamy/ratecounter"
 )
@@ -90,6 +91,8 @@ type Manager struct {
 	slidingWindowStart  time.Time
 
 	tplFuncs template.FuncMap
+
+	productManager *productmanager.ProductManager
 }
 
 // CampaignMessage represents an instance of campaign message to be pushed out,
@@ -146,7 +149,7 @@ type msgError struct {
 var pushTimeout = time.Second * 3
 
 // New returns a new instance of Mailer.
-func New(cfg Config, store Store, notifCB models.AdminNotifCallback, i *i18n.I18n, l *log.Logger) *Manager {
+func New(cfg Config, store Store, notifCB models.AdminNotifCallback, i *i18n.I18n, l *log.Logger, productManager *productmanager.ProductManager) *Manager {
 	if cfg.BatchSize < 1 {
 		cfg.BatchSize = 1000
 	}
@@ -174,6 +177,7 @@ func New(cfg Config, store Store, notifCB models.AdminNotifCallback, i *i18n.I18
 		campMsgErrorQueue:  make(chan msgError, cfg.MaxSendErrors),
 		campMsgErrorCounts: make(map[int]int),
 		slidingWindowStart: time.Now(),
+		productManager:     productManager,
 	}
 	m.tplFuncs = m.makeGnericFuncMap()
 
