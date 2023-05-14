@@ -904,15 +904,27 @@ UPDATE templates SET is_default=false WHERE id != $1 AND type=(SELECT type FROM 
 -- Delete a template as long as there's more than one. On deletion, set all campaigns
 -- with that template to the default template instead.
 WITH tpl AS (
+    SELECT type FROM templates WHERE id = $1
+),
+del AS (
     DELETE FROM templates WHERE id = $1 AND (SELECT COUNT(id) FROM templates) > 1 AND is_default = false RETURNING id
 ),
 def AS (
-    SELECT id FROM templates WHERE is_default = true AND type='campaign' LIMIT 1
+    SELECT id FROM templates WHERE is_default = true AND type=(SELECT type FROM tpl) LIMIT 1
 ),
 up AS (
-    UPDATE campaigns SET template_id = (SELECT id FROM def) WHERE (SELECT id FROM tpl) > 0 AND template_id = $1
+    UPDATE campaigns 
+    SET template_id = CASE 
+                WHEN (SELECT type FROM tpl) = 'campaign' 
+                    THEN (SELECT id FROM def) 
+                ELSE template_id END,
+        product_template_id = CASE 
+                WHEN (SELECT type FROM tpl) = 'product' 
+                    THEN (SELECT id FROM def) 
+                ELSE product_template_id END
+    WHERE (SELECT id FROM del) > 0 AND template_id = $1
 )
-SELECT id FROM tpl;
+SELECT id FROM del;
 
 
 -- media
