@@ -240,7 +240,8 @@ INSERT INTO settings (key, value) VALUES
     ('appearance.admin.custom_css', '""'),
     ('appearance.admin.custom_js', '""'),
     ('appearance.public.custom_css', '""'),
-    ('appearance.public.custom_js', '""');
+    ('appearance.public.custom_js', '""'),
+    ('product_provider', '[]');
 
 -- bounces
 DROP TABLE IF EXISTS bounces CASCADE;

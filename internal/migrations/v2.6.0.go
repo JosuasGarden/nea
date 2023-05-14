@@ -57,5 +57,14 @@ func V2_6_0(db *sqlx.DB, fs stuffbin.FileSystem, ko *koanf.Koanf) error {
 		return err
 	}
 
+	// Insert new provider settings.
+	if _, err := db.Exec(`
+		INSERT INTO settings (key, value) VALUES
+ 			('product_provider', '[]')
+ 			ON CONFLICT DO NOTHING;
+	`); err != nil {
+		return err
+	}
+
 	return nil
 }
