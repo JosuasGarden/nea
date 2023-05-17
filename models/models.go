@@ -404,7 +404,11 @@ type TxMessage struct {
 }
 
 type Product struct {
-
+	Name        string
+	Description string
+	TitleImage  string
+	URL         string
+	Price       string
 }
 
 // markdown is a global instance of Markdown parser and renderer.
@@ -634,6 +638,16 @@ func (t *Template) Compile(f template.FuncMap) error {
 	}
 
 	return nil
+}
+
+func (m *Product) Render(tpl *Template) ([]byte, error) {
+	// Render the body.
+	b := bytes.Buffer{}
+	if err := tpl.Tpl.ExecuteTemplate(&b, BaseTpl, m); err != nil {
+		return nil, err
+	}
+
+	return b.Bytes(), nil
 }
 
 func (m *TxMessage) Render(sub Subscriber, tpl *Template) error {
