@@ -5,33 +5,34 @@
         <div class="columns">
           <div class="column is-2">
             <b-field :label="$t('globals.buttons.enabled')">
-              <b-switch v-model="item.enabled" name="enabled"
-                  :native-value="true" />
+              <b-switch v-model="item.enabled" name="enabled" :native-value="true" />
             </b-field>
             <b-field>
-              <a @click.prevent="$utils.confirm(null, () => removeProvider(n))"
-                href="#" class="is-size-7">
+              <a
+                @click.prevent="$utils.confirm(null, () => removeProvider(n))"
+                href="#"
+                class="is-size-7"
+              >
                 <b-icon icon="trash-can-outline" size="is-small" />
-                {{ $t('globals.buttons.delete') }}
+                {{ $t("globals.buttons.delete") }}
               </a>
             </b-field>
-          </div><!-- first column -->
+          </div>
+          <!-- first column -->
 
-          <div class="column" :class="{'disabled': !item.enabled}">
+          <div class="column" :class="{ disabled: !item.enabled }">
             <div class="columns">
               <div class="column is-4">
                 <b-field :label="$t('globals.fields.type')" label-position="on-border">
                   <b-select v-model="item.type" name="type">
-                      <option
-                      v-for="(_, type) in item.config"
-                      :key="type"
-                      :value="type">
-                        {{ type }}
-                      </option>
+                    <option v-for="(_, type) in item.config" :key="type" :value="type">
+                      {{ type }}
+                    </option>
                   </b-select>
                 </b-field>
                 <b-field
-                  v-for="( _, key ) in item.config[item.type]" :key="key"
+                  v-for="(_, key) in item.config[item.type]"
+                  :key="key"
                   :label="$t(`settings.productProvider.${item.type}.${key}`)"
                   label-position="on-border"
                   :message="$t(`settings.productProvider.${item.type}.${key}.Help`)"
@@ -45,14 +46,17 @@
                   />
                 </b-field>
               </div>
-            </div><!-- type -->
+            </div>
           </div>
-        </div><!-- second container column -->
-      </div><!-- block -->
-    </div><!-- product-provider -->
+        </div>
+        <!-- second container column -->
+      </div>
+      <!-- block -->
+    </div>
+    <!-- product-provider -->
 
     <b-button @click="addProdiver" icon-left="plus" type="is-primary">
-      {{ $t('globals.buttons.addNew') }}
+      {{ $t("globals.buttons.addNew") }}
     </b-button>
   </div>
 </template>
@@ -87,12 +91,10 @@ export default Vue.extend({
         enabled: true,
         type: this.serverConfig.product_provider[0].type,
         config: Object.fromEntries(
-          this.serverConfig.product_provider.map(
-            (provider) => [
-              provider.type,
-              JSON.parse(JSON.stringify(provider.config)),
-            ],
-          ),
+          this.serverConfig.product_provider.map((provider) => [
+            provider.type,
+            JSON.parse(JSON.stringify(provider.config)),
+          ]),
         ),
       });
 
