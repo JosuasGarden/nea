@@ -54,12 +54,10 @@ func GetAvalibleProductProvider() []interface{} {
 		Config interface{} `json:"config"`
 	}
 
-	provider := []interface{}{
+	return []interface{}{
 		p{
 			Type:   "WooCommerce",
 			Config: provider.WooCommerceProviderConfig{},
 		},
 	}
-
-	return provider
 }
