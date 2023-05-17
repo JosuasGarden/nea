@@ -118,24 +118,44 @@ func handlePreviewTemplate(c echo.Context) error {
 				app.i18n.Ts("templates.errorRendering", "error", err.Error()))
 		}
 		out = msg.Body()
-    } else if tpl.Type == models.TemplateTypeProduct {
-
-    } else {
-		// Compile transactional template.
+	} else {
+		// Compile template.
 		if err := tpl.Compile(app.manager.GenericTemplateFuncs()); err != nil {
 			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 		}
 
-		m := models.TxMessage{
-			Subject: tpl.Subject,
-		}
+		if tpl.Type == models.TemplateTypeProduct {
+			p := models.Product{
+				Name: "Example Product",
+				Description: `
+                    <p>
+                        Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.
+                    </p>
+                `,
+				TitleImage: "https://picsum.photos/400",
+				URL:        "https://example.com/",
+				Price:      "9.99 €",
+			}
 
-		// Render the message.
-		if err := m.Render(dummySubscriber, &tpl); err != nil {
-			return echo.NewHTTPError(http.StatusBadRequest,
-				app.i18n.Ts("globals.messages.errorFetching", "name"))
+			// Render Product template
+			if body, err := p.Render(&tpl); err != nil {
+				return echo.NewHTTPError(http.StatusBadRequest,
+					app.i18n.Ts("globals.messages.errorFetching", "name"))
+			} else {
+				out = body
+			}
+		} else {
+			m := models.TxMessage{
+				Subject: tpl.Subject,
+			}
+
+			// Render the message.
+			if err := m.Render(dummySubscriber, &tpl); err != nil {
+				return echo.NewHTTPError(http.StatusBadRequest,
+					app.i18n.Ts("globals.messages.errorFetching", "name"))
+			}
+			out = m.Body
 		}
-		out = m.Body
 	}
 
 	return c.HTML(http.StatusOK, string(out))
