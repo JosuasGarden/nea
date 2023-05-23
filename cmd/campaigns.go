@@ -114,7 +114,7 @@ func handlePreviewCampaign(c echo.Context) error {
 		app          = c.Get("app").(*App)
 		id, _        = strconv.Atoi(c.Param("id"))
 		tplID, _     = strconv.Atoi(c.FormValue("template_id"))
-		prodTplID, _ = strconv.Atoi(c.FormValue("template_id"))
+		prodTplID, _ = strconv.Atoi(c.FormValue("product_template_id"))
 	)
 
 	if id < 1 {
