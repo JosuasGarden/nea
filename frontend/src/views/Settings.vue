@@ -164,7 +164,6 @@ export default Vue.extend({
       // Product provider
       for (let i = 0; i < form.product_provider.length; i += 1) {
         const provider = form.product_provider[i];
-        // copy the select provider type config
         form.product_provider[i].config = provider.config[provider.type];
       }
 
@@ -237,14 +236,24 @@ export default Vue.extend({
 
           d.product_provider[i].config = Object.fromEntries(
             this.serverConfig.product_provider.map(
-              (provider) => [
-                provider.type,
-                JSON.parse(JSON.stringify(provider.config)),
-              ],
+              (provider) => {
+                let config;
+                if (provider.type === providerType) {
+                  config = Object.fromEntries(
+                    Object.entries(provider.config).map(
+                      ([key]) => [key, providerConfig[key]],
+                    ),
+                  );
+                } else {
+                  config = JSON.parse(JSON.stringify(provider.config));
+                }
+                return [
+                  provider.type,
+                  config,
+                ];
+              },
             ),
           );
-
-          d.product_provider[i].config[providerType] = providerConfig;
         }
 
         this.key += 1;
