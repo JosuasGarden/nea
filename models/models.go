@@ -261,6 +261,7 @@ type Campaign struct {
 	ProductTemplateBody string             `db:"product_template_body" json:"-"`
 	ArchiveTemplateBody string             `db:"archive_template_body" json:"-"`
 	Tpl                 *template.Template `json:"-"`
+	ProductTpl          *template.Template `json:"-"`
 	SubjectTpl          *txttpl.Template   `json:"-"`
 	AltBodyTpl          *template.Template `json:"-"`
 
@@ -577,6 +578,15 @@ func (c *Campaign) CompileTemplate(f template.FuncMap) error {
 		return fmt.Errorf("error inserting child template: %v", err)
 	}
 	c.Tpl = out
+
+    // Compile product template
+	body = c.ProductTemplateBody
+	productTpl, err := template.New(BaseTpl).Funcs(f).Parse(body)
+	if err != nil {
+		return fmt.Errorf("error compiling base template: %v", err)
+	}
+    c.ProductTpl = productTpl
+
 
 	if strings.Contains(c.AltBody.String, "{{") {
 		b := c.AltBody.String
