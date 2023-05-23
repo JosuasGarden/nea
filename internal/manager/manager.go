@@ -462,6 +462,10 @@ func (m *Manager) TemplateFuncs(c *models.Campaign) template.FuncMap {
 		},
 	}
 
+	for k, v := range m.productManager.GetProviderFunctions(c) {
+		f[k] = v
+	}
+
 	for k, v := range m.tplFuncs {
 		f[k] = v
 	}

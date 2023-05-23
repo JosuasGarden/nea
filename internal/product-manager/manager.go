@@ -1,10 +1,12 @@
 package productmanager
 
 import (
+	"html/template"
 	"log"
 
 	"github.com/knadh/koanf/v2"
 	"github.com/knadh/listmonk/internal/product-manager/provider"
+	"github.com/knadh/listmonk/models"
 )
 
 type ProductManager struct {
@@ -46,6 +48,18 @@ func InitProductManager(ko *koanf.Koanf, lo *log.Logger) *ProductManager {
 	return &ProductManager{
 		provider: configuredProvider,
 	}
+}
+
+func (m *ProductManager) GetProviderFunctions(c *models.Campaign) template.FuncMap {
+	funcs := template.FuncMap{}
+
+	for _, provider := range m.provider {
+		for k, v := range provider.ProvideTemplateFunctions(c) {
+			funcs[k] = v
+		}
+	}
+
+	return funcs
 }
 
 func GetAvalibleProductProvider() []interface{} {
