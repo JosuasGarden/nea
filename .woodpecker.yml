@@ -1,0 +1,29 @@
+pipeline:
+  build-backend:
+    image: golang:latest
+    commands:
+      - make build
+  build-frontend:
+    image: node:19.9
+    commands:
+      - make build-frontend
+  package-binary:
+    image: golang:latest
+    commands:
+      - go install github.com/knadh/stuffbin/...
+      - make pack-bin
+  build-image-and-publish:
+    image: plugins/docker
+    settings:
+      registry: harbor.michael.vanstraten.cloud
+      username:
+        from_secret: robot_account_name
+      password:
+        from_secret: robot_account_token
+      repo: harbor.michael.vanstraten.cloud/josuasgarden/nea
+      tags:
+        - latest
+      cache_from: harbor.michael.vanstraten.cloud/josuasgarden/nea
+
+when:
+  branch: josuasgarden
