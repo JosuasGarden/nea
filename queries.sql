@@ -922,7 +922,7 @@ up AS (
                 WHEN (SELECT type FROM tpl) = 'product' 
                     THEN (SELECT id FROM def) 
                 ELSE product_template_id END
-    WHERE (SELECT id FROM del) > 0 AND template_id = $1
+    WHERE (SELECT id FROM del) > 0 AND (template_id = $1 OR product_template_id = $1)
 )
 SELECT id FROM del;
 
