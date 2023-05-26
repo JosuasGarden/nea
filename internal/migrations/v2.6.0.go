@@ -1,6 +1,8 @@
 package migrations
 
 import (
+	"fmt"
+
 	"github.com/jmoiron/sqlx"
 	"github.com/knadh/koanf/v2"
 	"github.com/knadh/listmonk/models"
@@ -51,9 +53,9 @@ func V2_6_0(db *sqlx.DB, fs stuffbin.FileSystem, ko *koanf.Koanf) error {
 	}
 
 	// Create new product_template_id column in campaigns
-	if _, err := db.Exec(`ALTER TABLE campaigns
-        ADD COLUMN IF NOT EXISTS product_template_id INTEGER REFERENCES templates(id) ON DELETE SET DEFAULT DEFAULT 2;
-    `); err != nil {
+	if _, err := db.Exec(fmt.Sprintf(`ALTER TABLE campaigns
+        ADD COLUMN IF NOT EXISTS product_template_id INTEGER REFERENCES templates(id) ON DELETE SET DEFAULT DEFAULT %d
+    `, prodTplID)); err != nil {
 		return err
 	}
 
